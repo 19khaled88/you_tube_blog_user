@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import connectDb from './utils/db.js';
 import userRotues from './routes/user.js'
@@ -10,6 +10,14 @@ const app = express();
 app.use(express.json());
 
 connectDb();
+
+app.get('/',(req:Request,res:Response)=>{
+    res.status(200).json({
+        message:'Server is live successfully',
+        data:'',
+        success:true
+    })
+});
 
 app.use('/api/v1',userRotues);
 
