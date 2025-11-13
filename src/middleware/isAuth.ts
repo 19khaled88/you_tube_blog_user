@@ -6,7 +6,7 @@ import type { IUser } from "../model/User.js";
 export interface AuthenticationRequest extends Request{
     user?:IUser | null
 }
-export const isAuth =async(req:AuthenticationRequest,res:Response,next:NextFunction)=>{
+export const isAuth =async(req:AuthenticationRequest,res:Response,next:NextFunction):Promise<void>=>{
     try {
         const authHeader = req.headers.authorization;
 
