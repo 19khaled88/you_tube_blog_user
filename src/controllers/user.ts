@@ -36,4 +36,18 @@ export const myProfile = TryCatch(async (req:AuthenticationRequest, res) => {
     const user = req.user;
 
     res.json(user)
+});
+
+
+export const userProfile = TryCatch(async(req,res)=>{
+    const user = await User.findById(req.params.id);
+
+    if(!user){
+        res.status(404).json({
+            message:'No user with this id',
+        });
+        return;
+    }
+
+    res.json(user)
 })
