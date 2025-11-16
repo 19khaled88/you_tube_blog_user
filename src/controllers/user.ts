@@ -3,6 +3,8 @@ import User from "../model/User.js";
 import jwt from 'jsonwebtoken'
 import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
+import getBuffer from "../utils/dataUri.js";
+import { cloudinary } from "../config/cloudinary.js";
 
 
 export const loginUser = TryCatch(async (req, res) => {
@@ -30,21 +32,19 @@ export const loginUser = TryCatch(async (req, res) => {
 });
 
 
-
-
-export const myProfile = TryCatch(async (req:AuthenticationRequest, res) => {
+export const myProfile = TryCatch(async (req: AuthenticationRequest, res) => {
     const user = req.user;
 
     res.json(user)
 });
 
 
-export const userProfile = TryCatch(async(req,res)=>{
+export const userProfile = TryCatch(async (req, res) => {
     const user = await User.findById(req.params.id);
 
-    if(!user){
+    if (!user) {
         res.status(404).json({
-            message:'No user with this id',
+            message: 'No user with this id',
         });
         return;
     }
@@ -53,20 +53,65 @@ export const userProfile = TryCatch(async(req,res)=>{
 });
 
 
-export const updateUser =TryCatch(async(req:AuthenticationRequest,res)=>{
-    const {name,instrgram,facebook,linkedin, bio} = req.body;
+export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
+    const { name, instrgram, facebook, linkedin, bio } = req.body;
 
-    const user = await User.findByIdAndUpdate(req.user?._id,{
-        name,instrgram,facebook,linkedin,bio,
-    },{new:true});
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        name, instrgram, facebook, linkedin, bio,
+    }, { new: true });
 
-     const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
+    const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
         expiresIn: "5d",
     });
 
     res.json({
-        messaeg:'User updated',
+        messaeg: 'User updated',
         token,
         user,
     })
+});
+
+
+export const updateProfilePicture = TryCatch(async (req: AuthenticationRequest, res: Response) => {
+    const file = req.file;
+
+    if (!file) {
+        res.status(400).json({
+            message: 'No file uploaded'
+        });
+        return;
+    }
+
+    const fileBuffer = getBuffer(file)
+
+    if (!fileBuffer || !fileBuffer.content) {
+        res.status(400).json({
+            message: 'Could not process file'
+        });
+        return;
+    }
+
+
+    const cloud = await cloudinary.uploader.upload(fileBuffer.content, {
+        folder: 'blogs_profile_pictures',
+        resource_type: 'auto',
+    });
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            image: cloud.secure_url
+        },
+        { new: true }
+    );
+
+    const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
+        expiresIn: "5d",
+    });
+    // This is a placeholder for the actual implementation
+    res.json({
+        message: 'Profile picture updated successfully',
+        token,
+        user,   
+    });
 })
