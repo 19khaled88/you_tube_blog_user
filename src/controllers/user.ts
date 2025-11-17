@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
-import { cloudinary } from "../config/cloudinary.js";
+import { cloudinary, configureCloudinary } from "../config/cloudinary.js";
 
 
 export const loginUser = TryCatch(async (req, res) => {
@@ -75,6 +75,7 @@ export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
 export const updateProfilePicture = TryCatch(async (req: AuthenticationRequest, res: Response) => {
     const file = req.file;
 
+
     if (!file) {
         res.status(400).json({
             message: 'No file uploaded'
@@ -92,26 +93,45 @@ export const updateProfilePicture = TryCatch(async (req: AuthenticationRequest, 
     }
 
 
-    const cloud = await cloudinary.uploader.upload(fileBuffer.content, {
-        folder: 'blogs_profile_pictures',
-        resource_type: 'auto',
-    });
+    // Get the configured cloudinary instance
+    const { cloudinary: configuredCloudinary } = configureCloudinary();
 
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            image: cloud.secure_url
-        },
-        { new: true }
-    );
+    if (!configuredCloudinary.config().api_key) {
+        res.status(500).json({
+            message: 'Cloudinary is not configured properly'
+        });
+        return;
+    }
 
-    const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
-        expiresIn: "5d",
-    });
-    // This is a placeholder for the actual implementation
-    res.json({
-        message: 'Profile picture updated successfully',
-        token,
-        user,   
-    });
+    try {
+        const cloud = await configuredCloudinary.uploader.upload(fileBuffer.content, {
+            folder: 'blogs',
+            resource_type: 'auto',
+        });
+
+        const user = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                image: cloud.secure_url
+            },
+            { new: true }
+        );
+
+        const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
+            expiresIn: "5d",
+        });
+        // This is a placeholder for the actual implementation
+        res.json({
+            message: 'Profile picture updated successfully',
+            token,
+            user,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error uploading to Cloudinary',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+
+
 })
