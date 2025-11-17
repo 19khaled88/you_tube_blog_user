@@ -38,6 +38,7 @@ export function configureCloudinary(): ConfigurationResult {
     secure: true
   };
 
+ 
   // Validate required environment variables
   const missingVars: string[] = [];
   
@@ -57,8 +58,6 @@ export function configureCloudinary(): ConfigurationResult {
     cloudinary.config(config);
     
     console.log('✅ Cloudinary configured successfully');
-    console.log(`📁 Cloud Name: ${config.cloud_name}`);
-    
     return {
       success: true,
       cloudinary
