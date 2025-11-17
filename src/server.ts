@@ -13,7 +13,7 @@ connectDb();
 
 app.get('/',(req:Request,res:Response)=>{
     res.status(200).json({
-        message:'User service is running successfully',
+        message:'Blog - User service is running successfully',
         data:'',
         success:true
     })
