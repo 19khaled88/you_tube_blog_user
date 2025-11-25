@@ -8,14 +8,16 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: "https://you-tube-blog-web.vercel.app",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     credentials: true,
     allowedHeaders: "Content-Type, Authorization"
 }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 
 

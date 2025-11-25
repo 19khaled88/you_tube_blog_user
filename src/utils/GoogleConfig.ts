@@ -12,5 +12,6 @@ const GOOGLE_CLIENT_SECRET =process.env.Google_Client_Secret;
 export const oauth2client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
-    "postmessage"
+    // "postmessage"
+    "https://you-tube-blog-web.vercel.app/auth/callback"
 );
