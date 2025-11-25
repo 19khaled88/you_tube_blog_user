@@ -5,18 +5,33 @@ import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
 import { cloudinary, configureCloudinary } from "../config/cloudinary.js";
+import { oauth2client } from "../utils/GoogleConfig.js";
+import axios from "axios";
 
 
 export const loginUser = TryCatch(async (req, res) => {
-    const { email, name, image } = req.body;
+    const {code} = req.body;
+    if(!code){
+        res.status(400).json({
+            message:'Authorization code is required'
+        });
+        return;
+    }
 
-    let user = await User.findOne({ email });
 
-    if (!user) {
+    const googleRes = await oauth2client.getToken(code)
+
+    oauth2client.setCredentials(googleRes.tokens)
+
+    const userRes = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`);
+
+    const {email,name,picture} = userRes.data
+
+    let user = await User.findOne({email});
+
+    if(!user){
         user = await User.create({
-            name,
-            email,
-            image,
+            name,email,image:picture 
         });
     }
 
@@ -24,11 +39,34 @@ export const loginUser = TryCatch(async (req, res) => {
         expiresIn: "5d",
     });
 
+
     res.status(200).json({
         message: 'User created successfully',
         token,
         user
     })
+
+    // const { email, name, image } = req.body;
+
+    // let user = await User.findOne({ email });
+
+    // if (!user) {
+    //     user = await User.create({
+    //         name,
+    //         email,
+    //         image,
+    //     });
+    // }
+
+    // const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
+    //     expiresIn: "5d",
+    // });
+
+    // res.status(200).json({
+    //     message: 'User created successfully',
+    //     token,
+    //     user
+    // })
 });
 
 
