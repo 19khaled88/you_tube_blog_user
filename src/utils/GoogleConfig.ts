@@ -6,7 +6,7 @@ dotenv.config()
 
 
 const GOOGLE_CLIENT_ID = process.env.Google_Client_id;
-const GOOGLE_CLIENT_SECRET =process.env.Google_Client_Secret;
+const GOOGLE_CLIENT_SECRET =process.env.Google_Client_S_Code;
 
 
 export const oauth2client = new google.auth.OAuth2(

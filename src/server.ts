@@ -8,8 +8,19 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+    "http://localhost:3005",
+    "https://you-tube-blog-web.vercel.app"
+]
+
 app.use(cors({
-    origin: "https://you-tube-blog-web.vercel.app",
+    origin: (origin,callback)=>{
+        if(!origin || allowedOrigins.includes(origin)){
+            callback(null,true);
+        }else{
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     credentials: true,
     allowedHeaders: "Content-Type, Authorization"
