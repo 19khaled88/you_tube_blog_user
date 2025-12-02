@@ -1,14 +1,20 @@
 import dotenv from 'dotenv'
-import {google} from 'googleapis'
+import {Auth, google} from 'googleapis'
 
 
 dotenv.config()
 
 
-const GOOGLE_CLIENT_ID = process.env.Google_Client_id;
-const GOOGLE_CLIENT_SECRET =process.env.Google_Client_S_Code;
+const GOOGLE_CLIENT_ID = process.env.Google_Client_id as string;
+const GOOGLE_CLIENT_SECRET =process.env.Google_Client_S_Code as string;
 
-
+export const createOAuth2Client=(redirectUri:string):Auth.OAuth2Client=>{
+    return new google.auth.OAuth2(
+        GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET,
+        redirectUri
+    )
+}
 export const oauth2client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
