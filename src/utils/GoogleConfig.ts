@@ -13,7 +13,9 @@ export const oauth2client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     // "postmessage"
-    "https://you-tube-blog-web.vercel.app/api/auth/callback/google",
+    process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3005/api/auth/callback/google'
+      : 'https://you-tube-blog-web.vercel.app/api/auth/callback/google'
     // 'http://localhost:3005/api/auth/callback/google'
     // 'https://you-tube-blog-web.vercel.app'
 
