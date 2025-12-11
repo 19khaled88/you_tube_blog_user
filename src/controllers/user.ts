@@ -5,7 +5,7 @@ import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
 import { cloudinary, configureCloudinary } from "../config/cloudinary.js";
-import { createOAuth2Client, oauth2client } from "../utils/GoogleConfig.js";
+import { createOAuth2Client, oauth2Client, oauth2client } from "../utils/GoogleConfig.js";
 import axios, { isAxiosError } from "axios";
 
 // Define proper error types
@@ -40,7 +40,7 @@ export const loginUser = TryCatch(async (req, res) => {
   }
 
   // create OAuth2 client with the redirect url from frontend
-  const oauth2Client = createOAuth2Client(redirect_uri);
+  // const oauth2Client = createOAuth2Client(redirect_uri);
 
   try {
     const {tokens} = await oauth2Client.getToken({
