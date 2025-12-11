@@ -31,20 +31,22 @@ export const loginUser = TryCatch(async (req, res) => {
     });
     return;
   }
-  if (code) {
-    if (!redirect_uri) {
-      return res.status(400).json({
-        message: "Redirect URI is required for Google OAuth",
-      });
-    }
-  }
+
+  // if (code) {
+  //   if (!redirect_uri) {
+  //     return res.status(400).json({
+  //       message: "Redirect URI is required for Google OAuth",
+  //     });
+  //   }
+  // }
 
   // create OAuth2 client with the redirect url from frontend
   // const oauth2Client = createOAuth2Client(redirect_uri);
 
   try {
     const {tokens} = await oauth2Client.getToken({
-      code,redirect_uri
+      code,
+      // redirect_uri
     });
 
     oauth2Client.setCredentials(tokens);
