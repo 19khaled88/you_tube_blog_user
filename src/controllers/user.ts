@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
-import { cloudinary, configureCloudinary } from "../config/cloudinary.js";
-import { createOAuth2Client, oauth2Client, oauth2client } from "../utils/GoogleConfig.js";
+import {  configureCloudinary } from "../config/cloudinary.js";
+import {  oauth2Client } from "../utils/GoogleConfig.js";
 import axios, { isAxiosError } from "axios";
 
 // Define proper error types
@@ -23,7 +23,7 @@ interface GoogleOAuthError extends Error {
 }
 
 export const loginUser = TryCatch(async (req, res) => {
-  const { code, redirect_uri } = req.body;
+  const { code } = req.body;
 
   if (!code) {
     res.status(400).json({
@@ -31,18 +31,6 @@ export const loginUser = TryCatch(async (req, res) => {
     });
     return;
   }
-
-  // if (code) {
-  //   if (!redirect_uri) {
-  //     return res.status(400).json({
-  //       message: "Redirect URI is required for Google OAuth",
-  //     });
-  //   }
-  // }
-
-  // create OAuth2 client with the redirect url from frontend
-  // const oauth2Client = createOAuth2Client(redirect_uri);
-
   try {
     const {tokens} = await oauth2Client.getToken({
       code,
@@ -57,14 +45,6 @@ export const loginUser = TryCatch(async (req, res) => {
         headers: { Authorization: `Bearer ${tokens.access_token}` }
       }
     );
-
-
-    // const googleRes = await oauth2client.getToken(code);
-
-    // oauth2client.setCredentials(googleRes.tokens);
-    // const userRes = await axios.get(
-    //   `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
-    // );
 
     const { email, name, picture } = userinfo.data;
 
@@ -92,12 +72,6 @@ export const loginUser = TryCatch(async (req, res) => {
       const err = error as GoogleOAuthError;
       console.error("Google OAuth error details:", error);
 
-      //   return res.status(400).json({
-      //     message: "Google authentication failed",
-      //     error: error.messaeg,
-      //     details: error?.response?.data,
-      //   });
-
       const errorMessage = err.response?.data?.error || err.message;
       const errorDescription = err.response?.data?.error_description || "";
 
@@ -115,12 +89,6 @@ export const loginUser = TryCatch(async (req, res) => {
       });
     }
 
-    // if (error instanceof Error) {
-    //   return res.status(500).json({
-    //     message: 'Internal server error',
-    //     error: error.message
-    //   });
-    // }
   }
 });
 
