@@ -43,14 +43,28 @@ export const loginUser = TryCatch(async (req, res) => {
   const oauth2Client = createOAuth2Client(redirect_uri);
 
   try {
-    const googleRes = await oauth2client.getToken(code);
+    const {tokens} = await oauth2Client.getToken({
+      code,redirect_uri
+    });
 
-    oauth2client.setCredentials(googleRes.tokens);
-    const userRes = await axios.get(
-      `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
+    oauth2Client.setCredentials(tokens);
+
+    const userinfo = await axios.get(
+      "https://openidconnect.googleapis.com/v1/userinfo",
+      {
+        headers: { Authorization: `Bearer ${tokens.access_token}` }
+      }
     );
 
-    const { email, name, picture } = userRes.data;
+
+    // const googleRes = await oauth2client.getToken(code);
+
+    // oauth2client.setCredentials(googleRes.tokens);
+    // const userRes = await axios.get(
+    //   `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
+    // );
+
+    const { email, name, picture } = userinfo.data;
 
     let user = await User.findOne({ email });
 
