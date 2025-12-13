@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import TryCatch from "../utils/TryCatch.js";
 import type { AuthenticationRequest } from "../middleware/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
-import {  configureCloudinary } from "../config/cloudinary.js";
-import {  oauth2Client } from "../utils/GoogleConfig.js";
+import { configureCloudinary } from "../config/cloudinary.js";
+import { oauth2Client } from "../utils/GoogleConfig.js";
 import axios, { isAxiosError } from "axios";
 
 // Define proper error types
@@ -32,7 +32,7 @@ export const loginUser = TryCatch(async (req, res) => {
     return;
   }
   try {
-    const {tokens} = await oauth2Client.getToken({
+    const { tokens } = await oauth2Client.getToken({
       code,
       // redirect_uri
     });
@@ -42,7 +42,7 @@ export const loginUser = TryCatch(async (req, res) => {
     const userinfo = await axios.get(
       "https://openidconnect.googleapis.com/v1/userinfo",
       {
-        headers: { Authorization: `Bearer ${tokens.access_token}` }
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
       }
     );
 
@@ -88,7 +88,6 @@ export const loginUser = TryCatch(async (req, res) => {
         ],
       });
     }
-
   }
 });
 
@@ -112,18 +111,40 @@ export const userProfile = TryCatch(async (req, res) => {
 });
 
 export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
+  const allowedFields = ["name", "instrgram", "facebook", "linkedin", "bio"];
+
+
+
+  const bodyKeys = Object.keys(req.body);
+  const invalidFields = bodyKeys.filter((key) => !allowedFields.includes(key));
+
+  if (invalidFields.length > 0) {
+    return res.status(400).json({
+      message: "Invalid fields in request",
+      invalidFields,
+    });
+  }
+
+  const updateData: Record<string, any> = {};
+
+  allowedFields.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({
+      message: "No valid fields provided for update",
+    });
+  }
+
   const { name, instrgram, facebook, linkedin, bio } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
-    {
-      name,
-      instrgram,
-      facebook,
-      linkedin,
-      bio,
-    },
-    { new: true }
+    updateData,
+    { new: true,runValidators:true }
   );
 
   const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
@@ -131,7 +152,7 @@ export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
   });
 
   res.json({
-    messaeg: "User updated",
+    message: "User updated successfully",
     token,
     user,
   });
