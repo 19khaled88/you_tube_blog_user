@@ -7,6 +7,7 @@ import getBuffer from "../utils/dataUri.js";
 import { configureCloudinary } from "../config/cloudinary.js";
 import { oauth2Client } from "../utils/GoogleConfig.js";
 import axios, { isAxiosError } from "axios";
+import AppError from "../utils/AppError.js";
 
 // Define proper error types
 interface GoogleTokenError {
@@ -23,15 +24,18 @@ interface GoogleOAuthError extends Error {
 }
 
 export const loginUser = TryCatch(async (req, res) => {
-  const { code } = req.body;
+  let user;
+  let isNewUser = false;
 
-  if (!code) {
-    res.status(400).json({
-      message: "Authorization code is required",
-    });
-    return;
-  }
-  try {
+  /**
+   * ============================
+   * GOOGLE OAUTH LOGIN
+   * ============================
+   */
+
+  const { code, email, name } = req.body;
+
+  if (code) {
     const { tokens } = await oauth2Client.getToken({
       code,
       // redirect_uri
@@ -46,49 +50,70 @@ export const loginUser = TryCatch(async (req, res) => {
       }
     );
 
-    const { email, name, picture } = userinfo.data;
+    if (!userinfo.data.email) {
+      throw new AppError("Google account has no email associated", 400);
+    }
 
-    let user = await User.findOne({ email });
+    const { email: googleEmail, name, picture } = userinfo.data;
+
+    user = await User.findOne({ email: googleEmail });
 
     if (!user) {
       user = await User.create({
         name,
-        email,
+        email: googleEmail,
         image: picture,
       });
+      isNewUser = true;
     }
+  } else if (email && name) {
 
-    const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
-      expiresIn: "5d",
-    });
-
-    res.status(200).json({
-      message: "User created successfully",
-      token,
-      user,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      const err = error as GoogleOAuthError;
-      console.error("Google OAuth error details:", error);
-
-      const errorMessage = err.response?.data?.error || err.message;
-      const errorDescription = err.response?.data?.error_description || "";
-
-      return res.status(400).json({
-        message: "Google authentication failed",
-        error: errorMessage,
-        description: errorDescription,
-        details: err.response?.data,
-        statusCode: err.response?.status,
-        possibleSolutions: [
-          "Check if redirect_uri matches Google Cloud Console",
-          "Verify the authorization code is valid and not expired",
-          "Ensure client ID and secret are correct",
-        ],
+  /**
+   * ============================
+   * EMAIL LOGIN
+   * ============================
+   */
+    user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
       });
+      isNewUser = true;
     }
+  } else {
+
+  /**
+   * ============================
+   * INVALID REQUEST
+   * ============================
+   */
+    throw new AppError("Invalid login request", 400);
   }
+
+  /**
+   * ============================
+   * GENERATE JWT
+   * ============================
+   */
+
+  const token = jwt.sign(
+    { user },
+    process.env.JWT_SEC as string,
+    {
+      expiresIn: "5d",
+    }
+  );
+
+  const message = isNewUser
+    ? "User registered successfully"
+    : "User logged in successfully";
+  res.status(200).json({
+    sucess: true,
+    message,
+    token,
+    user,
+  });
 });
 
 export const myProfile = TryCatch(async (req: AuthenticationRequest, res) => {
@@ -112,8 +137,6 @@ export const userProfile = TryCatch(async (req, res) => {
 
 export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
   const allowedFields = ["name", "instrgram", "facebook", "linkedin", "bio"];
-
-
 
   const bodyKeys = Object.keys(req.body);
   const invalidFields = bodyKeys.filter((key) => !allowedFields.includes(key));
@@ -141,11 +164,10 @@ export const updateUser = TryCatch(async (req: AuthenticationRequest, res) => {
 
   const { name, instrgram, facebook, linkedin, bio } = req.body;
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    updateData,
-    { new: true,runValidators:true }
-  );
+  const user = await User.findByIdAndUpdate(req.user?._id, updateData, {
+    new: true,
+    runValidators: true,
+  });
 
   const token = jwt.sign({ user }, process.env.JWT_SEC as string, {
     expiresIn: "5d",
