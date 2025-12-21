@@ -13,23 +13,36 @@ const allowedOrigins = [
     "https://you-tube-blog-web.vercel.app"
 ]
 
-app.use(cors({
-    origin: (origin,callback)=>{
-        if(!origin || allowedOrigins.includes(origin)){
-            callback(null,true);
-        }else{
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    credentials: true,
-    allowedHeaders: "Content-Type, Authorization"
-}));
+// app.use(cors({
+//     origin: (origin,callback)=>{
+//         if(!origin || allowedOrigins.includes(origin)){
+//             callback(null,true);
+//         }else{
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+//     credentials: true,
+//     allowedHeaders: "Content-Type, Authorization"
+// }));
+
+
+const corsOptions = {
+  origin: [
+    "https://you-tube-blog-web.vercel.app",
+    "http://localhost:3005",
+  ],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+// Optional but safe:
+app.options(/.*/, cors());
 
 
 connectDb();
