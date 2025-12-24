@@ -244,3 +244,15 @@ export const updateProfilePicture = TryCatch(
     }
   }
 );
+
+export const getUsersBulk = TryCatch(async (req, res) => {
+  const { ids } = req.body;
+
+  const users = await User.find(
+    { _id: { $in: ids } },
+    { name: 1, image: 1 } // only needed fields
+  );
+
+  res.json(users);
+});
+
